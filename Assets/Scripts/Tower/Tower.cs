@@ -1,18 +1,39 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
+[RequireComponent(typeof(TowerBuilder))]
 public class Tower : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    private TowerBuilder _towerBuilder;
+    private List<Block> _blocks;
+
+    public event UnityAction<int> SizeUpdate;
+
+    private void Start()
     {
-        
+        _towerBuilder = GetComponent<TowerBuilder>();
+        _blocks = _towerBuilder.Build();
+
+        foreach (var block in _blocks)
+        {
+            block.BulletHit += OnBulletHit;
+        }
+
+        SizeUpdate?.Invoke(_blocks.Count);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnBulletHit(Block HitedBlock)
     {
-        
+        HitedBlock.BulletHit -= OnBulletHit;
+        _blocks.Remove(HitedBlock);
+
+        foreach (var block in _blocks)
+        {
+            block.transform.position = new Vector3(block.transform.position.x, block.transform.position.y - block.transform.localScale.y / 2, block.transform.position.z);
+        }
+
+        SizeUpdate?.Invoke(_blocks.Count);
     }
 }
